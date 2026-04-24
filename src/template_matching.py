@@ -7,14 +7,15 @@ from skimage.metrics import structural_similarity as ssim
 TEMPLATE_DIR = "../templates"
 
 TEMPLATE_FILES = {
-    "alto": "alto.png",
-    "derecha": "derecha.png",
-    "izquierda": "izquierda.png",
-    "derecho": "derecho.png",
+    "alto": "stop.png",
+    "trabajadores": "worker.png",
+    "derecha": "right.png",
+    "izquierda": "left.png",
+    "derecho": "straight.png",
 }
 
 
-def load_templates(size=(100, 100)):
+def load_templates(size=(120, 120)):
     templates = {}
 
     for label, filename in TEMPLATE_FILES.items():
@@ -32,7 +33,7 @@ def load_templates(size=(100, 100)):
     return templates
 
 
-def classify_roi(roi, templates, size=(100, 100)):
+def classify_roi(roi, templates, allowed_labels=None, size=(120, 120)):
     if roi is None or roi.size == 0:
         return None, 0, 0
 
@@ -42,23 +43,35 @@ def classify_roi(roi, templates, size=(100, 100)):
     best_label = None
     best_tm_score = -1
     best_ssim_score = -1
+    best_final_score = -1
 
     for label, template in templates.items():
+        if allowed_labels is not None and label not in allowed_labels:
+            continue
+
+        # Asegurar que el template tenga el mismo tamaño que la ROI
+        template_resized = cv2.resize(template, size)
+
         tm_result = cv2.matchTemplate(
             roi_gray,
-            template,
+            template_resized,
             cv2.TM_CCOEFF_NORMED
         )
 
         tm_score = tm_result[0][0]
 
-        ssim_score = ssim(roi_gray, template)
+        ssim_score = ssim(
+            roi_gray,
+            template_resized,
+            data_range=255
+        )
 
         final_score = (tm_score * 0.6) + (ssim_score * 0.4)
 
-        if final_score > ((best_tm_score * 0.6) + (best_ssim_score * 0.4)):
+        if final_score > best_final_score:
             best_label = label
             best_tm_score = tm_score
             best_ssim_score = ssim_score
+            best_final_score = final_score
 
     return best_label, best_tm_score, best_ssim_score
