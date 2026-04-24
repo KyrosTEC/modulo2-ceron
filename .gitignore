@@ -1,0 +1,30 @@
+# Entorno virtual
+venv/
+.env/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Videos
+videos/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.wmv
+
+# Outputs/resultados
+output/
+results/
+
+# IDE
+.vscode/
+.idea/
+
+# Sistema
+.DS_Store
+Thumbs.db
