@@ -57,6 +57,9 @@ def main():
         "trabajadores": 0
     }
 
+    last_detections = []
+    MAX_MISSED_FRAMES = 3
+
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -100,7 +103,6 @@ def main():
             if label is None:
                 continue
 
-            # No descartamos STOP/trabajadores si ya fueron detectados por forma
             if color_label in ["red_triangle", "red_stop"]:
                 pass
             elif color_label == "blue":
@@ -113,9 +115,13 @@ def main():
             if label in detections_count:
                 detections_count[label] += 1
 
-            color = (0, 255, 0)
+            last_detections.append({
+                "label": label,
+                "box": (x, y, w, h),
+                "life": MAX_MISSED_FRAMES
+            })
 
-            cv2.rectangle(vis, (x, y), (x + w, y + h), color, 2)
+            cv2.rectangle(vis, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
             text = f"{label} TM:{tm_score:.2f} SSIM:{ssim_score:.2f}"
             cv2.putText(
@@ -124,9 +130,35 @@ def main():
                 (x, y - 10),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.5,
-                color,
+                (0, 255, 0),
                 2
             )
+
+        new_last_detections = []
+
+        for det in last_detections:
+            det["life"] -= 1
+
+            if det["life"] <= 0:
+                continue
+
+            det_label = det["label"]
+            dx, dy, dw, dh = det["box"]
+
+            cv2.rectangle(vis, (dx, dy), (dx + dw, dy + dh), (0, 180, 255), 2)
+            cv2.putText(
+                vis,
+                f"{det_label} tracking",
+                (dx, dy - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 180, 255),
+                2
+            )
+
+            new_last_detections.append(det)
+
+        last_detections = new_last_detections
 
         out.write(vis)
 

@@ -94,7 +94,7 @@ def detect_candidates(frame):
     mask_blue = cv2.morphologyEx(mask_blue, cv2.MORPH_CLOSE, kernel_big)
     mask_blue = cv2.dilate(mask_blue, kernel_small, iterations=1)
 
-    candidates_red = filter_contours(mask_red, "red", frame.shape, min_area=80)
+    candidates_red = filter_contours(mask_red, "red", frame.shape, min_area=50)
     candidates_blue = filter_contours(mask_blue, "blue", frame.shape, min_area=180)
 
     candidates = candidates_red + candidates_blue
